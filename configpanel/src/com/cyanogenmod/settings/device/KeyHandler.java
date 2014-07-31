@@ -4,6 +4,7 @@ import android.app.ActivityManagerNative;
 import android.app.KeyguardManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -23,12 +24,13 @@ import android.view.KeyEvent;
 
 import com.android.internal.os.DeviceKeyHandler;
 import com.android.internal.util.ArrayUtils;
-import com.android.internal.util.cm.NavigationRingHelpers;
-import com.android.internal.util.cm.TorchConstants;
+import com.android.internal.util.paranoid.LightbulbConstants;
 
 public class KeyHandler implements DeviceKeyHandler {
 
     private static final String TAG = KeyHandler.class.getSimpleName();
+    private static final String AUTO_START = "AUTO_START";
+    private static final String TOGGLE_FLASHLIGHT = "TOGGLE_FLASHLIGHT";
     private static final int GESTURE_REQUEST = 1;
 
     // Supported scancodes
@@ -95,11 +97,9 @@ public class KeyHandler implements DeviceKeyHandler {
                 dispatchMediaKeyWithWakeLockToAudioService(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
                 break;
             case GESTURE_V_SCANCODE:
-                if (NavigationRingHelpers.isTorchAvailable(mContext)) {
-                    Intent torchIntent = new Intent(TorchConstants.ACTION_TOGGLE_STATE);
-                    torchIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-                    mContext.sendBroadcast(torchIntent);
-                }
+                Intent intentLightbulb = new Intent(TOGGLE_FLASHLIGHT);
+                intentLightbulb.putExtra(AUTO_START, true);
+                mContext.sendBroadcast(intentLightbulb);
                 break;
             case GESTURE_LTR_SCANCODE:
                 dispatchMediaKeyWithWakeLockToAudioService(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
