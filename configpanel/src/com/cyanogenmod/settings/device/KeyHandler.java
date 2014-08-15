@@ -60,6 +60,7 @@ public class KeyHandler implements DeviceKeyHandler {
     private SensorManager mSensorManager;
     private Sensor mProximitySensor;
     WakeLock mProximityWakeLock;
+    private SensorEventListener mSensorListener;
 
     public KeyHandler(Context context) {
         mContext = context;
@@ -80,6 +81,7 @@ public class KeyHandler implements DeviceKeyHandler {
     private class EventHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
+            cleanupHold();
             KeyEvent event = (KeyEvent) msg.obj;
             switch(event.getScanCode()) {
             case FLIP_CAMERA_SCANCODE:
@@ -127,7 +129,7 @@ public class KeyHandler implements DeviceKeyHandler {
             }
             Message msg = getMessageForKeyEvent(event);
             if (mProximitySensor != null) {
-                mEventHandler.sendMessageDelayed(msg, 200);
+                mEventHandler.sendMessageDelayed(msg, 300);
                 processEvent(event);
             } else {
                 mEventHandler.sendMessage(msg);
@@ -142,13 +144,22 @@ public class KeyHandler implements DeviceKeyHandler {
         return msg;
     }
 
+    private void cleanupHold() {
+        if (mProximityWakeLock.isHeld()) {
+            mProximityWakeLock.release();
+        }
+        if (mSensorListener != null) {
+            mSensorManager.unregisterListener(mSensorListener);
+            mSensorListener = null;
+        }
+    }
+
     private void processEvent(final KeyEvent keyEvent) {
         mProximityWakeLock.acquire();
-        mSensorManager.registerListener(new SensorEventListener() {
+        mSensorListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                mProximityWakeLock.release();
-                mSensorManager.unregisterListener(this);
+                cleanupHold();
                 if (!mEventHandler.hasMessages(GESTURE_REQUEST)) {
                     // The sensor took to long, ignoring.
                     return;
@@ -163,7 +174,8 @@ public class KeyHandler implements DeviceKeyHandler {
             @Override
             public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
-        }, mProximitySensor, SensorManager.SENSOR_DELAY_FASTEST);
+        };
+        mSensorManager.registerListener(mSensorListener, mProximitySensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     private IAudioService getAudioService() {
