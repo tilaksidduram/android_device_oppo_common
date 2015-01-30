@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2013-2014 The NamelessRom Project
+     Copyright (C) 2015 The AOSPA-legacy Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -17,5 +17,5 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="touchscreen_extras">Extras</string>
     <string name="haptic_feedback">Haptic feedback</string>
-    <string name="haptic_feedback_summary">Vibrate when a gesture got detected</string>
+    <string name="haptic_feedback_summary">Enable haptic feedback when a gesture is detected</string>
 </resources>
