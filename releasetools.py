@@ -75,12 +75,11 @@ def InstallRawImage(image_data, api_version, input_zip, fn, info, filesmap):
   else:
     print "warning radio-update: no support for api_version less than 3."
 
-def FULLOTA_InstallEnd_MMC(info):
+def InstallRadioFiles(info):
   files = GetRadioFiles(info.input_zip)
   if files == {}:
     print "warning radio-update: no radio image in input target_files; not flashing radio"
     return
-  info.script.UnmountAll()
   info.script.Print("Writing radio image...")
   #Load filesmap file
   filesmap = LoadFilesMap(info.input_zip)
@@ -93,9 +92,21 @@ def FULLOTA_InstallEnd_MMC(info):
   return
 
 def FullOTA_InstallEnd(info):
-  FULLOTA_InstallEnd_MMC(info)
+  InstallRadioFiles(info)
 
 def IncrementalOTA_InstallEnd(info):
-  #TODO: Implement device specific asserstions.
-  print "warning radio-update: no real implementation of IncrementalOTA_InstallEnd."
+  InstallRadioFiles(info)
+
+def AddTrustZoneAssertion(info):
+  # Presence of filesmap indicates packaged firmware
+  filesmap = LoadFilesMap(info.input_zip)
+  if filesmap != {}:
+    return
+  android_info = info.input_zip.read("OTA/android-info.txt")
+  m = re.search(r'require\s+version-trustzone\s*=\s*(\S+)', android_info)
+  if m:
+    versions = m.group(1).split('|')
+    if len(versions) and '*' not in versions:
+      cmd = 'assert(oppo.verify_trustzone(' + ','.join(['"%s"' % tz for tz in versions]) + ') == "1");'
+      info.script.AppendExtra(cmd)
   return
